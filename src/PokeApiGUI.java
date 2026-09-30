@@ -1,17 +1,47 @@
 import org.json.JSONObject;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-public class PokeApi
+public class PokeApiGUI
 {
+
+    private JPanel mainPanel;
+    private JTextField campoId;
+    private JTextField campoNombre;
+    private JTextField campoPeso;
+    private JTextField campoAltura;
+    private JTextField campoHp;
+    private JTextField campoAtk;
+    private JTextField campoDef;
+    private JTextField campoAtkEsp;
+    private JTextField campoDefEsp;
+    private JTextField campoVelocidad;
+    private JTextArea areaHabilidades;
+    private JButton buscarPokemonButton;
+
+
+    public PokeApiGUI()
+    {
+        buscarPokemonButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                consultarPokemon();
+            }
+        });
+    }
+
     public void consultarPokemon()
     {
-        String nombrePokemon = JOptionPane.showInputDialog("Ingrese el nombre del pokemon");
+        String nombrePokemon = campoNombre.getText();
 
         try
         {
@@ -32,10 +62,9 @@ public class PokeApi
                 //Creamos el objeto JSON
                 JSONObject json = new JSONObject(response.body());
 
-                System.out.println("ID Pokemon: "+json.getInt("id"));
-                System.out.println("Nombre: "+json.getString("name"));
-                System.out.println("Peso: "+json.getInt("weight"));
-                System.out.println("altura: "+json.getInt("height"));
+                campoId.setText(String.valueOf(json.getInt("id")));
+                campoPeso.setText(String.valueOf(json.getInt("weight")));
+                campoAltura.setText(String.valueOf(json.getInt("height")));
 
                 System.out.println("Habilidades:");
                 //Accedemos al array de habilidades
@@ -47,7 +76,7 @@ public class PokeApi
                     JSONObject nameJson = (JSONObject) abilityJson.get("ability");
 
                     //mostramos el nombre de la habilidad
-                    System.out.println(nameJson.getString("name"));
+                    areaHabilidades.append(nameJson.getString("name")+"\n");
 
                 });
 
@@ -88,11 +117,14 @@ public class PokeApi
         }
     }
 
-    //psvm
     static void main()
     {
-        PokeApi pokeApi = new PokeApi();
-        pokeApi.consultarPokemon();
+        JFrame frame = new JFrame("PokeApi");
+        frame.setContentPane(new PokeApiGUI().mainPanel);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
     }
+
 
 }

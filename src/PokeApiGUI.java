@@ -1,6 +1,7 @@
 import org.json.JSONObject;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -25,6 +26,7 @@ public class PokeApiGUI
     private JTextField campoVelocidad;
     private JTextArea areaHabilidades;
     private JButton buscarPokemonButton;
+    private JLabel textoFoto;
 
 
     public PokeApiGUI()
@@ -91,6 +93,22 @@ public class PokeApiGUI
 
                     //mostramos el nombre de la habilidad
                     System.out.println(nameJson.getString("name")+": "+statJson.getInt("base_stat"));
+
+                    String nombre = nameJson.getString("name");
+                    int valor = statJson.getInt("base_stat");
+
+                    if (nombre.equals("hp"))
+                        campoHp.setText(String.valueOf(valor));
+                    else if (nombre.equals("attack"))
+                        campoAtk.setText(String.valueOf(valor));
+                    else if (nombre.equals("defense"))
+                        campoDef.setText(String.valueOf(valor));
+                    else if (nombre.equals("special-attack"))
+                        campoAtkEsp.setText(String.valueOf(valor));
+                    else if (nombre.equals("special-defense"))
+                        campoDefEsp.setText(String.valueOf(valor));
+                    else if (nombre.equals("speed"))
+                        campoVelocidad.setText(String.valueOf(valor));
                 });
 
                 System.out.println("Imagen");
@@ -98,6 +116,20 @@ public class PokeApiGUI
                 JSONObject imageJson = (JSONObject) json.get("sprites");
                 //accedemos al objeto de imagen
                 System.out.println(imageJson.getString("front_default"));
+
+                try
+                {
+                    java.net.URL urlImagen = new java.net.URL(imageJson.getString("front_default"));
+                    ImageIcon icono = new ImageIcon(urlImagen);
+                    Image image = icono.getImage().getScaledInstance(100, 100, Image.SCALE_DEFAULT);
+                    textoFoto.setText("");
+                    textoFoto.setIcon(new ImageIcon(urlImagen));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                    textoFoto.setText("No se pudo cargar la imagen");
+                }
 
                 System.out.println("Sonido");
                 //accedemos al objeto de sonido

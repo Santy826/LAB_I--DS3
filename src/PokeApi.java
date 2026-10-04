@@ -13,6 +13,13 @@ public class PokeApi
     {
         String nombrePokemon = JOptionPane.showInputDialog("Ingrese el nombre del pokemon");
 
+        if (nombrePokemon == null || nombrePokemon.trim().isEmpty())
+        {
+            return;
+        }
+
+        nombrePokemon = nombrePokemon.trim().toLowerCase();
+
         try
         {
             //se crea un cliente http para realizar la peticion
@@ -89,7 +96,7 @@ public class PokeApi
     }
 
     //psvm
-    static void main()
+    public static void main(String[] args)
     {
         PokeApi pokeApi = new PokeApi();
         pokeApi.consultarPokemon();

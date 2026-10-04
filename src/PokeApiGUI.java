@@ -43,7 +43,15 @@ public class PokeApiGUI
 
     public void consultarPokemon()
     {
-        String nombrePokemon = campoNombre.getText();
+        String nombrePokemon = campoNombre.getText().trim().toLowerCase();
+
+        if (nombrePokemon.isEmpty())
+        {
+            JOptionPane.showMessageDialog(null, "Ingrese el nombre de un pokemon");
+            return;
+        }
+
+        areaHabilidades.setText("");
 
         try
         {
@@ -121,9 +129,9 @@ public class PokeApiGUI
                 {
                     java.net.URL urlImagen = new java.net.URL(imageJson.getString("front_default"));
                     ImageIcon icono = new ImageIcon(urlImagen);
-                    Image image = icono.getImage().getScaledInstance(100, 100, Image.SCALE_DEFAULT);
+                    Image image = icono.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
                     textoFoto.setText("");
-                    textoFoto.setIcon(new ImageIcon(urlImagen));
+                    textoFoto.setIcon(new ImageIcon(image));
                 }
                 catch (Exception e)
                 {
@@ -149,13 +157,17 @@ public class PokeApiGUI
         }
     }
 
-    static void main()
+    public static void main(String[] args)
     {
-        JFrame frame = new JFrame("PokeApi");
-        frame.setContentPane(new PokeApiGUI().mainPanel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
+        SwingUtilities.invokeLater(() ->
+        {
+            JFrame frame = new JFrame("PokeApi");
+            frame.setContentPane(new PokeApiGUI().mainPanel);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 
 

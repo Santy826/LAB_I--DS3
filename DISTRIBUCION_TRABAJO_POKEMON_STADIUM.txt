@@ -1,0 +1,481 @@
+DISTRIBUCION DEL TRABAJO
+POKEMON STADIUM LITE
+
+Proyecto: Miniaplicacion de escritorio en Java Swing
+Integrantes: Persona 1 y Persona 2
+Distribucion propuesta: 50% de responsabilidad para cada persona
+
+======================================================================
+1. OBJETIVO GENERAL DEL PROYECTO
+======================================================================
+
+Construir una miniaplicacion de escritorio en Java Swing que simule un
+combate por turnos entre dos Pokemon obtenidos desde PokeAPI.
+
+La aplicacion debe permitir:
+
+- Seleccionar dos Pokemon de forma aleatoria.
+- Buscar un Pokemon por su nombre.
+- Mostrar imagen, nombre, tipos y estadisticas basicas.
+- Mostrar el HP maximo y el HP actual.
+- Ejecutar un combate por turnos.
+- Registrar los eventos de la batalla en un area desplazable.
+- Mostrar errores sin bloquear la interfaz.
+- Mantener separadas la interfaz grafica, la comunicacion con la API y
+  las reglas del combate.
+
+======================================================================
+2. CRITERIO DE DISTRIBUCION
+======================================================================
+
+La division se realizara por responsabilidades tecnicas:
+
+- La Persona 1 estara a cargo del modelo de datos, el consumo de PokeAPI
+  y la logica interna del combate.
+- La Persona 2 estara a cargo de la interfaz Swing, la interaccion con el
+  usuario y la actualizacion visual de los eventos.
+- Ambos integrantes participaran en el diseno inicial, la integracion,
+  las pruebas finales, el README y la presentacion.
+
+Esta division permite que cada persona tenga una parte completa y
+verificable del proyecto. La Persona 1 garantiza que los datos y las
+reglas sean correctos. La Persona 2 garantiza que la aplicacion sea clara,
+usable y no se bloquee durante las peticiones o el combate.
+
+======================================================================
+3. RESPONSABILIDADES DE LA PERSONA 1
+======================================================================
+MODELO, API Y LOGICA DEL COMBATE
+======================================================================
+
+3.1. Modelo Pokemon
+
+Crear y mantener la clase Pokemon con, como minimo, los siguientes datos:
+
+- Nombre.
+- Tipos del Pokemon.
+- URL o imagen frontal del sprite.
+- HP maximo.
+- HP actual.
+- Ataque.
+- Defensa.
+- Velocidad.
+
+La clase debe incluir metodos claros para:
+
+- Consultar cada dato.
+- Reiniciar el HP actual al comenzar una batalla.
+- Reducir el HP despues de recibir dano.
+- Impedir que el HP sea menor que cero.
+- Determinar si el Pokemon esta derrotado.
+
+3.2. Cliente de PokeAPI
+
+Crear o completar la clase PokeApi/PokeApiClient para consumir el
+siguiente endpoint de solo lectura:
+
+https://pokeapi.co/api/v2/pokemon/{name}
+
+Sus responsabilidades seran:
+
+- Construir correctamente la URL de consulta.
+- Realizar peticiones HTTP usando java.net.http.HttpClient.
+- Procesar la respuesta JSON con una libreria ligera.
+- Extraer nombre, tipos, estadisticas y sprite frontal.
+- Permitir consultas por nombre.
+- Permitir obtener Pokemon aleatorios.
+- Informar de forma controlada los errores de red.
+- Informar cuando el Pokemon no exista.
+- Evitar que un error de API cierre o congele la aplicacion.
+
+La clase no debe contener codigo de interfaz grafica. Debe devolver datos
+o errores para que la interfaz decida como mostrarlos.
+
+3.3. Clase Battle
+
+Crear o completar la clase Battle, que concentrara las reglas del combate.
+
+Debe encargarse de:
+
+- Recibir los dos Pokemon seleccionados.
+- Determinar quien comienza de acuerdo con la velocidad.
+- Resolver los empates de velocidad de manera aleatoria.
+- Ejecutar un turno de ataque.
+- Calcular el dano.
+- Aplicar el dano al Pokemon defensor.
+- Cambiar el turno mientras ambos Pokemon sigan con vida.
+- Detectar cuando el HP de un Pokemon llegue a cero.
+- Determinar y comunicar al ganador.
+
+Formula propuesta para el dano:
+
+    danoBase = ATK * random(0,1) - DEF * random(0,1)
+
+La implementacion debe garantizar que el dano aplicado nunca sea negativo.
+Tambien se puede utilizar una variante equivalente, siempre que quede
+documentada en el README y se aplique de manera consistente.
+
+Reglas adicionales:
+
+- Probabilidad de golpe critico: 10%.
+- Multiplicador del golpe critico: x1.5.
+- Agua es efectivo contra Fuego.
+- Fuego es efectivo contra Planta.
+- Planta es efectivo contra Agua, con multiplicador x1.3.
+- Efectividad inversa con multiplicador x0.7.
+- Los demas casos utilizan multiplicador x1.0.
+- Solo se considerara el primer tipo del Pokemon si se decide aplicar
+  efectividad simple.
+
+3.4. Interfaz BattleListener
+
+Definir la interfaz BattleListener para desacoplar la logica de la
+interfaz grafica.
+
+Debe notificar, como minimo, los siguientes eventos:
+
+- onTurn(String attacker, String defender, int damage,
+  boolean critical, double modifier)
+- onHpChanged(String pokemon, int hpActual)
+- onBattleEnded(String winner)
+
+La clase Battle no debe actualizar directamente componentes Swing.
+Solamente debe emitir eventos.
+
+3.5. Pruebas de la logica
+
+La Persona 1 preparara y ejecutara pruebas para verificar:
+
+- Creacion correcta de un Pokemon.
+- HP inicial y HP maximo.
+- HP que nunca queda por debajo de cero.
+- Calculo de dano.
+- Dano minimo igual a cero.
+- Aplicacion de golpes criticos.
+- Aplicacion de efectividad por tipo.
+- Inicio por velocidad.
+- Desempate aleatorio de velocidad.
+- Finalizacion cuando un Pokemon llega a cero HP.
+- Notificacion del ganador.
+
+======================================================================
+4. RESPONSABILIDADES DE LA PERSONA 2
+======================================================================
+INTERFAZ GRAFICA, EVENTOS Y EXPERIENCIA DE USUARIO
+======================================================================
+
+4.1. Diseno de PokeApiGUI
+
+Crear o completar la interfaz PokeApiGUI y su archivo de formulario
+PokeApiGUI.form.
+
+La ventana debe incluir dos paneles, uno para cada jugador. Cada panel
+debe mostrar:
+
+- Nombre del Pokemon.
+- Imagen frontal o sprite.
+- Tipos.
+- HP maximo.
+- HP actual.
+- Ataque.
+- Defensa.
+- Velocidad.
+- Barra o indicador visual del HP.
+- Campo de texto para buscar por nombre.
+- Boton Load.
+- Boton Random.
+
+La interfaz tambien debe incluir:
+
+- Boton Fight.
+- JTextArea para el registro de batalla.
+- JScrollPane para desplazarse por el registro.
+- Mensajes visibles de estado, carga y error.
+
+4.2. ActionListener y controles
+
+Implementar ActionListener para los botones principales:
+
+- Load: buscar el Pokemon escrito en el campo de texto.
+- Random: obtener un Pokemon aleatorio.
+- Fight: comenzar el combate cuando ambos Pokemon esten cargados.
+
+La interfaz debe:
+
+- Validar que el campo de nombre no este vacio.
+- Informar cuando el nombre no sea valido.
+- Mostrar un estado de carga mientras se consulta la API.
+- Evitar acciones repetidas durante una carga.
+- Deshabilitar Fight hasta que ambos Pokemon esten cargados correctamente.
+- Deshabilitar o controlar los botones cuando la batalla haya comenzado.
+- Permitir iniciar una nueva seleccion cuando sea necesario.
+
+4.3. Concurrencia y SwingWorker
+
+Las peticiones a PokeAPI no deben ejecutarse directamente en el hilo de
+eventos de Swing.
+
+La Persona 2 implementara SwingWorker o una solucion equivalente para:
+
+- Ejecutar la peticion HTTP en segundo plano.
+- Mostrar un indicador de carga.
+- Actualizar la interfaz cuando la respuesta llegue.
+- Mostrar los errores en la interfaz.
+- Reactivar los controles al terminar la operacion.
+- Evitar que la ventana se congele durante una peticion.
+
+Las modificaciones a los componentes Swing deben realizarse en el hilo
+adecuado de la interfaz.
+
+4.4. Integracion de BattleListener
+
+Conectar la interfaz con los eventos producidos por Battle.
+
+Al recibir onTurn, la interfaz debe agregar al log:
+
+- Pokemon atacante.
+- Pokemon defensor.
+- Dano causado.
+- Si el ataque fue critico.
+- Efectividad aplicada.
+- HP restante, cuando corresponda.
+
+Al recibir onHpChanged, debe:
+
+- Actualizar el texto del HP.
+- Actualizar la barra de progreso.
+- Evitar que el valor visual sea negativo.
+
+Al recibir onBattleEnded, debe:
+
+- Mostrar el ganador.
+- Informar que la batalla finalizo.
+- Deshabilitar Fight durante esa batalla.
+- Permitir una nueva batalla despues de seleccionar Pokemon nuevamente.
+
+4.5. Pruebas de la interfaz
+
+La Persona 2 realizara pruebas manuales para verificar:
+
+- Carga por nombre valido.
+- Carga por nombre inexistente.
+- Seleccion aleatoria para cada jugador.
+- Visualizacion correcta del sprite.
+- Visualizacion de nombre, tipos y estadisticas.
+- Deshabilitacion de Fight antes de cargar ambos Pokemon.
+- Mensajes de error visibles.
+- Interfaz responsiva mientras se consulta la API.
+- Actualizacion correcta de las barras de HP.
+- Registro desplazable de todos los turnos.
+- Anuncio del ganador.
+
+======================================================================
+5. TAREAS COMPARTIDAS
+======================================================================
+
+5.1. Diseno inicial
+
+Ambas personas deben acordar antes de programar:
+
+- Nombre definitivo de las clases.
+- Atributos y metodos publicos de Pokemon.
+- Formato de los datos que devuelve PokeApi.
+- Forma de comunicar errores.
+- Firma exacta de BattleListener.
+- Formula final del dano.
+- Mensajes que apareceran en el log.
+- Flujo para comenzar una nueva batalla.
+
+5.2. Integracion
+
+La integracion se realizara en pasos pequenos:
+
+1. La Persona 1 entrega un Pokemon de prueba para que la interfaz pueda
+   mostrar datos sin depender inicialmente de la red.
+2. La Persona 2 conecta los paneles visuales con los datos del modelo.
+3. La Persona 1 conecta Battle con dos Pokemon de prueba.
+4. La Persona 2 conecta BattleListener con el log y las barras de HP.
+5. Ambos prueban el flujo completo con datos reales de PokeAPI.
+6. Ambos corrigen problemas de nombres, tipos, estados o actualizacion.
+
+5.3. Pruebas finales conjuntas
+
+Ambas personas deben probar, como minimo:
+
+- Dos Pokemon cargados por nombre.
+- Un Pokemon aleatorio y otro cargado por nombre.
+- Dos Pokemon aleatorios.
+- Nombre inexistente.
+- Error de red.
+- Campos vacios.
+- Velocidades iguales.
+- Combate completo hasta que exista un ganador.
+- Ataque critico.
+- Efectividad de tipos.
+- Registro completo de eventos.
+- Reinicio de una nueva batalla.
+
+5.4. README
+
+La documentacion se dividira de esta forma:
+
+Persona 1:
+
+- Descripcion del modelo Pokemon.
+- Descripcion del consumo de PokeAPI.
+- Formula de dano.
+- Reglas de velocidad, critico y efectividad.
+- Descripcion de BattleListener.
+
+Persona 2:
+
+- Instrucciones para ejecutar la aplicacion.
+- Descripcion de la interfaz.
+- Funcion de los botones.
+- Explicacion del uso de SwingWorker.
+- Capturas de pantalla.
+- Ejemplos de mensajes de error y combate.
+
+Ambas personas deben revisar la version final del README y confirmar que
+las instrucciones funcionan en un equipo limpio.
+
+======================================================================
+6. DISTRIBUCION PORCENTUAL
+======================================================================
+
+AREA                                      PERSONA 1       PERSONA 2
+------------------------------------------------------------------
+Modelo Pokemon                              25%             10%
+Consumo de PokeAPI                          20%              5%
+Logica del combate                          30%              5%
+Interfaz grafica                             5%             35%
+Eventos y listeners                         10%             15%
+Concurrencia y errores                       5%             15%
+Pruebas, README e integracion               10%             15%
+------------------------------------------------------------------
+TOTAL APROXIMADO                            50%             50%
+
+La tabla representa la carga aproximada y no una medicion rigida de horas.
+La complejidad de cada tarea puede variar, por lo que ambos integrantes
+deben colaborar durante la integracion y la solucion de errores.
+
+======================================================================
+7. CRONOGRAMA SUGERIDO
+======================================================================
+
+ETAPA 1 - Analisis y diseno
+
+Ambos integrantes:
+
+- Revisar los requisitos.
+- Definir clases, atributos y responsabilidades.
+- Acordar la firma de los metodos principales.
+- Decidir la formula de dano.
+- Crear la estructura inicial del proyecto.
+
+ETAPA 2 - Desarrollo de modulos
+
+Persona 1:
+
+- Implementar Pokemon.
+- Implementar PokeApi/PokeApiClient.
+- Implementar Battle.
+- Implementar BattleListener.
+
+Persona 2:
+
+- Organizar PokeApiGUI.
+- Crear los paneles de los jugadores.
+- Agregar botones y campos.
+- Agregar barra de HP y area de log.
+- Preparar los ActionListener.
+
+ETAPA 3 - Primera integracion
+
+Ambos integrantes:
+
+- Conectar Pokemon con la interfaz.
+- Probar datos de ejemplo.
+- Confirmar que los nombres y tipos se muestran correctamente.
+- Conectar BattleListener con la interfaz.
+
+ETAPA 4 - Concurrencia y errores
+
+Persona 1:
+
+- Revisar excepciones de API y datos JSON.
+- Asegurar que el modelo soporte estados invalidos de forma segura.
+
+Persona 2:
+
+- Integrar SwingWorker.
+- Mostrar estados de carga.
+- Mostrar errores sin bloquear la UI.
+
+Ambos:
+
+- Probar fallos de red y consultas invalidas.
+
+ETAPA 5 - Pruebas y documentacion
+
+- Ejecutar todas las pruebas funcionales.
+- Corregir problemas encontrados.
+- Completar README.
+- Tomar capturas de pantalla.
+- Preparar la demostracion.
+
+======================================================================
+8. CRITERIOS DE ACEPTACION
+======================================================================
+
+El proyecto se considerara terminado cuando:
+
+- La aplicacion compile con Java 11 o una version superior compatible.
+- Se puedan cargar Pokemon por nombre.
+- Se puedan obtener Pokemon aleatorios.
+- Se muestre el sprite frontal.
+- Se muestren nombre, tipos y estadisticas.
+- Fight permanezca deshabilitado hasta cargar ambos Pokemon.
+- Las peticiones HTTP no congelen la interfaz.
+- El combate respete la velocidad y los turnos.
+- El dano se calcule con una formula documentada.
+- Se apliquen criticos y efectividad cuando corresponda.
+- El HP no sea negativo.
+- El log muestre todos los turnos y eventos importantes.
+- Se anuncie al ganador.
+- Se muestren errores de manera visible.
+- Exista una interfaz BattleListener funcional.
+- El README incluya ejecucion, diseno y capturas.
+- Ambos integrantes puedan explicar su modulo y la integracion completa.
+
+======================================================================
+9. RECOMENDACION DE TRABAJO EN EQUIPO
+======================================================================
+
+Cada integrante debe trabajar en una rama o conjunto de cambios claramente
+identificado y realizar commits pequenos con mensajes descriptivos.
+
+Se recomienda revisar los cambios antes de integrarlos y mantener una
+lista comun de tareas pendientes. Ningun modulo debe considerarse terminado
+hasta que haya sido probado junto con el otro modulo.
+
+La responsabilidad final es compartida: aunque cada persona tenga un area
+principal, ambos integrantes deben conocer el flujo general de la
+aplicacion y participar en la demostracion final.
+
+======================================================================
+10. RESUMEN FINAL
+======================================================================
+
+Persona 1 desarrolla el nucleo funcional: modelo Pokemon, cliente de
+PokeAPI, reglas de batalla y eventos.
+
+Persona 2 desarrolla la experiencia de uso: interfaz Swing, botones,
+validaciones, concurrencia, actualizacion visual y log de batalla.
+
+Ambos realizan el diseno inicial, la integracion, las pruebas completas,
+la documentacion y la presentacion.
+
+Esta organizacion distribuye el trabajo de forma proporcional, mantiene
+separadas las responsabilidades y permite demostrar claramente el aporte
+de cada integrante sin perder la unidad del proyecto.

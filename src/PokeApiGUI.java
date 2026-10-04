@@ -1,17 +1,9 @@
-import org.json.JSONObject;
-
+import java.util.concurrent.ExecutionException;
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 
 public class PokeApiGUI
 {
+    private final PokeApiClient apiClient = new PokeApiClient();
 
     private JPanel mainPanel;
     private JTextField campoId;
@@ -31,125 +23,68 @@ public class PokeApiGUI
 
     public PokeApiGUI()
     {
-        buscarPokemonButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                consultarPokemon();
-            }
-        });
+        buscarPokemonButton.addActionListener(event -> consultarPokemon());
     }
 
     public void consultarPokemon()
     {
-        String nombrePokemon = campoNombre.getText();
-
-        try
-        {
-            //se crea un cliente http para realizar la peticion
-            HttpClient client = HttpClient.newHttpClient();
-
-            //se crea un objeto de tipo request para realizar la peticion
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://pokeapi.co/api/v2/pokemon/"+nombrePokemon))
-                    .build();
-
-            //ejecutamos la solicitud
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            //se verifica el codigo de respuesta, 200 para ejecucion exitosa
-            if (response.statusCode() == 200)
-            {
-                //Creamos el objeto JSON
-                JSONObject json = new JSONObject(response.body());
-
-                campoId.setText(String.valueOf(json.getInt("id")));
-                campoPeso.setText(String.valueOf(json.getInt("weight")));
-                campoAltura.setText(String.valueOf(json.getInt("height")));
-
-                System.out.println("Habilidades:");
-                //Accedemos al array de habilidades
-                json.getJSONArray("abilities").forEach(ability ->
-                {
-                    //accedemos a cada habilidad donde esta contenido el objeto de habilidad
-                    JSONObject abilityJson = (JSONObject) ability;
-                    //accedemos al objeto de habilidad
-                    JSONObject nameJson = (JSONObject) abilityJson.get("ability");
-
-                    //mostramos el nombre de la habilidad
-                    areaHabilidades.append(nameJson.getString("name")+"\n");
-
-                });
-
-                System.out.println("Estadisticas:");
-                //Accedemos al array de estaditicas
-                json.getJSONArray("stats").forEach(stat ->
-                {
-                    //accedemos a cada estadistica donde esta contenido el objeto de habilidad
-                    JSONObject statJson = (JSONObject) stat;
-                    //accedemos al objeto de habilidad
-                    JSONObject nameJson = (JSONObject) statJson.get("stat");
-
-                    //mostramos el nombre de la habilidad
-                    System.out.println(nameJson.getString("name")+": "+statJson.getInt("base_stat"));
-
-                    String nombre = nameJson.getString("name");
-                    int valor = statJson.getInt("base_stat");
-
-                    if (nombre.equals("hp"))
-                        campoHp.setText(String.valueOf(valor));
-                    else if (nombre.equals("attack"))
-                        campoAtk.setText(String.valueOf(valor));
-                    else if (nombre.equals("defense"))
-                        campoDef.setText(String.valueOf(valor));
-                    else if (nombre.equals("special-attack"))
-                        campoAtkEsp.setText(String.valueOf(valor));
-                    else if (nombre.equals("special-defense"))
-                        campoDefEsp.setText(String.valueOf(valor));
-                    else if (nombre.equals("speed"))
-                        campoVelocidad.setText(String.valueOf(valor));
-                });
-
-                System.out.println("Imagen");
-                //accedemos al objeto de imagen
-                JSONObject imageJson = (JSONObject) json.get("sprites");
-                //accedemos al objeto de imagen
-                System.out.println(imageJson.getString("front_default"));
-
-                try
-                {
-                    java.net.URL urlImagen = new java.net.URL(imageJson.getString("front_default"));
-                    ImageIcon icono = new ImageIcon(urlImagen);
-                    Image image = icono.getImage().getScaledInstance(100, 100, Image.SCALE_DEFAULT);
-                    textoFoto.setText("");
-                    textoFoto.setIcon(new ImageIcon(urlImagen));
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                    textoFoto.setText("No se pudo cargar la imagen");
-                }
-
-                System.out.println("Sonido");
-                //accedemos al objeto de sonido
-                JSONObject soundJson = (JSONObject) json.get("cries");
-                //accedemos al objeto de sonido
-                System.out.println(soundJson.getString("latest"));
-
-            }
-            else
-            {
-                JOptionPane.showMessageDialog(null, "El pokemon no existe");
-            }
+        String nombrePokemon = campoNombre.getText().trim();
+        if (nombrePokemon.isEmpty()) {
+            JOptionPane.showMessageDialog(mainPanel, "Escribe el nombre de un Pokemon");
+            return;
         }
-        catch (IOException | InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+
+        buscarPokemonButton.setEnabled(false);
+        SwingWorker<Pokemon, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Pokemon doInBackground() throws PokeApiException {
+                return apiClient.buscarPorNombre(nombrePokemon);
+            }
+
+            @Override
+            protected void done() {
+                buscarPokemonButton.setEnabled(true);
+                try {
+                    mostrarPokemon(get());
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    mostrarError("La consulta fue interrumpida");
+                } catch (ExecutionException exception) {
+                    Throwable cause = exception.getCause();
+                    mostrarError(cause == null ? exception.getMessage() : cause.getMessage());
+                }
+            }
+        };
+        worker.execute();
     }
 
-    static void main()
+    private void mostrarPokemon(Pokemon pokemon) {
+        campoId.setText(String.valueOf(pokemon.getId()));
+        campoNombre.setText(pokemon.getNombre());
+        campoPeso.setText(String.valueOf(pokemon.getPeso()));
+        campoAltura.setText(String.valueOf(pokemon.getAltura()));
+        campoHp.setText(String.valueOf(pokemon.getHpMaximo()));
+        campoAtk.setText(String.valueOf(pokemon.getAtaque()));
+        campoDef.setText(String.valueOf(pokemon.getDefensa()));
+        campoAtkEsp.setText(String.valueOf(pokemon.getAtaqueEspecial()));
+        campoDefEsp.setText(String.valueOf(pokemon.getDefensaEspecial()));
+        campoVelocidad.setText(String.valueOf(pokemon.getVelocidad()));
+        areaHabilidades.setText(String.join("\n", pokemon.getHabilidades()));
+
+        if (pokemon.getSpriteUrl().isEmpty()) {
+            textoFoto.setIcon(null);
+            textoFoto.setText("Imagen no disponible");
+            return;
+        }
+        textoFoto.setText("");
+        textoFoto.setIcon(new ImageIcon(pokemon.getSpriteUrl()));
+    }
+
+    private void mostrarError(String mensaje) {
+        JOptionPane.showMessageDialog(mainPanel, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public static void main(String[] args)
     {
         JFrame frame = new JFrame("PokeApi");
         frame.setContentPane(new PokeApiGUI().mainPanel);
